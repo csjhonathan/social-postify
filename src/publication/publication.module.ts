@@ -1,14 +1,26 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { PublicationService } from './publication.service';
 import { PublicationController } from './publication.controller';
-import { MediaModule } from 'src/media/media.module';
+import { PrismaModule } from 'src/prisma/prisma.module';
 import { PostModule } from 'src/post/post.module';
-import { PrismaService } from 'src/prisma.service';
+import { MediaModule } from 'src/media/media.module';
+import { PublicationRepository } from './publication.repository';
+import { PostRepository } from 'src/post/post.repository';
+import { MediaRepository } from 'src/media/media.repository';
 
 @Module({
-  imports: [MediaModule, PostModule],
+  imports: [
+    PrismaModule,
+    forwardRef(() => PostModule),
+    forwardRef(() => MediaModule),
+  ],
   controllers: [PublicationController],
-  providers: [PrismaService, PublicationService],
+  providers: [
+    PublicationRepository,
+    PublicationService,
+    PostRepository,
+    MediaRepository,
+  ],
   exports: [PublicationService],
 })
 export class PublicationModule {}

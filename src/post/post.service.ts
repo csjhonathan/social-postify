@@ -5,23 +5,26 @@ import {
 } from '@nestjs/common';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
-import { PrismaService } from 'src/prisma.service';
+import { PostRepository } from './post.repository';
+import { PublicationRepository } from 'src/publication/publication.repository';
 
 @Injectable()
 export class PostService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly postRepository: PostRepository,
+    private readonly publicationsRepository: PublicationRepository,
+  ) {}
 
   async create(createPostDto: CreatePostDto) {
-    const { title, text, image } = createPostDto;
-    return await this.prisma.post.create({ data: { title, text, image } });
+    return await this.postRepository.create(createPostDto);
   }
 
   async findAll() {
-    return await this.prisma.post.findMany();
+    return await this.postRepository.findAll();
   }
 
   async findOne(id: number) {
-    const post = await this.prisma.post.findUnique({ where: { id } });
+    const post = await this.postRepository.findOne(id);
 
     if (!post) throw new NotFoundException();
 
@@ -29,37 +32,22 @@ export class PostService {
   }
 
   async update(id: number, updatePostDto: UpdatePostDto) {
-    const { title, text, image } = updatePostDto;
-
-    const post = await this.prisma.post.findUnique({ where: { id } });
+    const post = await this.postRepository.findOne(id);
     if (!post) throw new NotFoundException();
 
-    return await this.prisma.post.update({
-      where: { id },
-      data: { title, text, image: image ?? null },
-    });
+    return await this.postRepository.update(id, updatePostDto);
   }
 
   async remove(id: number) {
-    const post = await this.prisma.post.findFirst({ where: { id } });
+    const post = await this.postRepository.findOne(id);
 
     if (!post) throw new NotFoundException();
 
-    const publicationsCount = await this.prisma.publication.count({
-      where: { postId: id },
-    });
+    const publicationsCount =
+      await this.publicationsRepository.publicationCountByPostId(id);
     if (publicationsCount > 0)
       throw new ForbiddenException('This post is linked to a publication!');
 
-    return await this.prisma.post.delete({
-      where: {
-        id,
-        AND: {
-          NOT: {
-            Publication: { some: {} },
-          },
-        },
-      },
-    });
+    return await this.postRepository.delete(id);
   }
 }

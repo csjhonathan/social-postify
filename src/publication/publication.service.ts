@@ -6,19 +6,23 @@ import {
 import { CreatePublicationDto } from './dto/create-publication.dto';
 import { UpdatePublicationDto } from './dto/update-publication.dto';
 import dayjs from 'dayjs';
-import { PrismaService } from 'src/prisma.service';
+import { PublicationRepository } from './publication.repository';
+import { MediaRepository } from 'src/media/media.repository';
+import { PostRepository } from 'src/post/post.repository';
 
 @Injectable()
 export class PublicationService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly publicationRepository: PublicationRepository,
+    private readonly mediaRepository: MediaRepository,
+    private readonly postRepository: PostRepository,
+  ) {}
 
   async create(createPublicationDto: CreatePublicationDto) {
     const { mediaId, postId, date } = createPublicationDto;
 
-    const post = await this.prisma.post.findUnique({ where: { id: postId } });
-    const media = await this.prisma.media.findUnique({
-      where: { id: mediaId },
-    });
+    const media = await this.mediaRepository.findOne(mediaId);
+    const post = await this.postRepository.findOne(postId);
 
     if (!post || !media) {
       let message = '';
@@ -39,19 +43,15 @@ export class PublicationService {
       throw new NotFoundException(message);
     }
 
-    return await this.prisma.publication.create({
-      data: { mediaId, postId, date },
-    });
+    return await this.publicationRepository.create({ mediaId, postId, date });
   }
 
   async findAll() {
-    return await this.prisma.publication.findMany();
+    return await this.publicationRepository.findAll();
   }
 
   async findOne(id: number) {
-    const publication = await this.prisma.publication.findUnique({
-      where: { id },
-    });
+    const publication = await this.publicationRepository.findOne(id);
 
     if (!publication) throw new NotFoundException();
 
@@ -61,16 +61,12 @@ export class PublicationService {
   async update(id: number, updatePublicationDto: UpdatePublicationDto) {
     const { mediaId, postId, date } = updatePublicationDto;
 
-    const publication = await this.prisma.publication.findUnique({
-      where: { id },
-    });
+    const publication = await this.publicationRepository.findOne(id);
 
     if (!publication) throw new NotFoundException();
 
-    const post = await this.prisma.post.findUnique({ where: { id: postId } });
-    const media = await this.prisma.media.findUnique({
-      where: { id: mediaId },
-    });
+    const media = await this.mediaRepository.findOne(mediaId);
+    const post = await this.postRepository.findOne(postId);
 
     if (!post || !media) {
       let message = '';
@@ -96,21 +92,20 @@ export class PublicationService {
 
     if (isPassed) throw new ForbiddenException();
 
-    return await this.prisma.publication.update({
-      where: { id },
-      data: { mediaId, postId, date },
+    return await this.publicationRepository.update(id, {
+      mediaId,
+      postId,
+      date,
     });
   }
 
   async remove(id: number) {
-    const existsPublication = await this.prisma.publication.findUnique({
-      where: { id },
-    });
+    const existsPublication = await this.publicationRepository.findOne(id);
 
     if (!existsPublication) {
       throw new NotFoundException();
     }
 
-    return await this.prisma.publication.delete({ where: { id } });
+    return await this.publicationRepository.delete(id);
   }
 }

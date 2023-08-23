@@ -1,5 +1,5 @@
 export class Media {
-  public id: number;
+  private id: number;
   public title: string;
   public username: string;
 
@@ -7,5 +7,9 @@ export class Media {
     this.id = id;
     this.title = title;
     this.username = username;
+  }
+
+  get _id() {
+    return this.id;
   }
 }

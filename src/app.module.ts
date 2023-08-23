@@ -3,10 +3,11 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MediaModule } from './media/media.module';
 import { PostModule } from './post/post.module';
+import { PublicationModule } from './publication/publication.module';
 
 @Module({
   controllers: [AppController],
   providers: [AppService],
-  imports: [MediaModule, PostModule],
+  imports: [MediaModule, PostModule, PublicationModule],
 })
 export class AppModule {}

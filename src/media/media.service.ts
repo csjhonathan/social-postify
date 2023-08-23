@@ -13,7 +13,7 @@ export class MediaService {
   private idCount: number;
   constructor() {
     this.medias = [];
-    this.idCount = this.medias.length + 1;
+    this.idCount = 1;
   }
 
   create(createMediaDto: CreateMediaDto) {
@@ -27,7 +27,7 @@ export class MediaService {
     const id = this.idCount;
     const media = new Media(id, title, username);
     this.medias.push(media);
-    this.idCount = this.medias.length + 1;
+    this.idCount++;
     return { id };
   }
 

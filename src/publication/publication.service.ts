@@ -5,114 +5,112 @@ import {
 } from '@nestjs/common';
 import { CreatePublicationDto } from './dto/create-publication.dto';
 import { UpdatePublicationDto } from './dto/update-publication.dto';
-import { Publication } from './entities/publication.entity';
-import { MediaService } from 'src/media/media.service';
-import { PostService } from 'src/post/post.service';
 import dayjs from 'dayjs';
+import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class PublicationService {
-  private publications: Publication[];
-  private idCount: number;
+  constructor(private prisma: PrismaService) {}
 
-  constructor(
-    private readonly mediaService: MediaService,
-    private readonly postService: PostService,
-  ) {
-    this.publications = [];
-    this.idCount = 1;
-  }
-
-  create(createPublicationDto: CreatePublicationDto) {
+  async create(createPublicationDto: CreatePublicationDto) {
     const { mediaId, postId, date } = createPublicationDto;
-    const medias = this.mediaService._medias;
-    const posts = this.postService._posts;
 
-    const postExists = posts.some((post) => post._id === id);
-    const mediaExists = medias.some((media) => media._id === id);
+    const post = await this.prisma.post.findUnique({ where: { id: postId } });
+    const media = await this.prisma.media.findUnique({
+      where: { id: mediaId },
+    });
 
-    if (!postExists || !mediaExists) {
-      const message = `${!postExists && 'Post'} ${
-        !mediaExists && !postExists && 'and'
-      } ${!mediaExists && 'Media'} not exists!`;
+    if (!post || !media) {
+      let message = '';
+
+      if (!post) {
+        message += 'Post ';
+      }
+
+      if (!media) {
+        if (message.length > 0) {
+          message += 'and ';
+        }
+        message += 'Media ';
+      }
+
+      message += 'not exists!';
 
       throw new NotFoundException(message);
     }
 
-    const id = this.idCount;
-    const publication = new Publication(id, mediaId, postId, date);
-
-    this.publications.push(publication);
-    this.idCount++;
-
-    return publication;
+    return await this.prisma.publication.create({
+      data: { mediaId, postId, date },
+    });
   }
 
-  findAll() {
-    return this.publications;
+  async findAll() {
+    return await this.prisma.publication.findMany();
   }
 
-  findOne(id: number) {
-    const publication = this.publications.find(
-      (publication) => publication._id === id,
-    );
+  async findOne(id: number) {
+    const publication = await this.prisma.publication.findUnique({
+      where: { id },
+    });
 
     if (!publication) throw new NotFoundException();
 
     return publication;
   }
 
-  update(id: number, updatePublicationDto: UpdatePublicationDto) {
+  async update(id: number, updatePublicationDto: UpdatePublicationDto) {
     const { mediaId, postId, date } = updatePublicationDto;
-    const publication = this.publications.find(
-      (publication) => publication._id === id,
-    );
+
+    const publication = await this.prisma.publication.findUnique({
+      where: { id },
+    });
 
     if (!publication) throw new NotFoundException();
 
-    const medias = this.mediaService._medias;
-    const posts = this.postService._posts;
+    const post = await this.prisma.post.findUnique({ where: { id: postId } });
+    const media = await this.prisma.media.findUnique({
+      where: { id: mediaId },
+    });
 
-    const postExists = posts.some((post) => post._id === id);
-    const mediaExists = medias.some((media) => media._id === id);
+    if (!post || !media) {
+      let message = '';
 
-    if (!postExists || !mediaExists) {
-      const message = `${!postExists && 'Post'} ${
-        !mediaExists && !postExists && 'and'
-      } ${!mediaExists && 'Media'} not exists!`;
+      if (!post) {
+        message += 'Post ';
+      }
+
+      if (!media) {
+        if (message.length > 0) {
+          message += 'and ';
+        }
+        message += 'Media ';
+      }
+
+      message += 'not exists!';
 
       throw new NotFoundException(message);
     }
 
     const currentDate = new Date(Date.now());
-    const isPassed = dayjs(currentDate).isAfter(publication._date);
+    const isPassed = dayjs(currentDate).isAfter(publication.date);
 
     if (isPassed) throw new ForbiddenException();
 
-    publication._mediaId = mediaId;
-    publication._postId = postId;
-    publication._date = date;
-
-    return `This action updates a #${id} publication`;
+    return await this.prisma.publication.update({
+      where: { id },
+      data: { mediaId, postId, date },
+    });
   }
 
-  remove(id: number) {
-    const existsPublication = this.publications.some(
-      (publication) => publication._id === id,
-    );
+  async remove(id: number) {
+    const existsPublication = await this.prisma.publication.findUnique({
+      where: { id },
+    });
 
     if (!existsPublication) {
       throw new NotFoundException();
     }
 
-    this.publications = this.publications.filter(
-      (publication) => publication._id !== id,
-    );
-
-    return `This action removes a #${id} publication`;
-  }
-
-  get _publications() {
-    return this.publications;
+    return await this.prisma.publication.delete({ where: { id } });
   }
 }

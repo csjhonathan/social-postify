@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { MediaService } from './media.service';
 import { MediaController } from './media.controller';
-import { PublicationModule } from 'src/publication/publication.module';
+import { PrismaClient } from '@prisma/client';
+import { PrismaService } from 'src/prisma.service';
 
 @Module({
-  imports: [PublicationModule],
+  imports: [PrismaClient],
   controllers: [MediaController],
-  providers: [MediaService],
+  providers: [PrismaService, MediaService],
   exports: [MediaService],
 })
 export class MediaModule {}

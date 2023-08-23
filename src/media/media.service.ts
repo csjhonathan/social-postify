@@ -1,84 +1,95 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateMediaDto } from './dto/create-media.dto';
 import { UpdateMediaDto } from './dto/update-media.dto';
 import { Media } from './entities/media.entity';
-import { PublicationService } from 'src/publication/publication.service';
+import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class MediaService {
-  private medias: Media[];
-  private idCount: number;
-  constructor(private readonly publicationService: PublicationService) {
-    this.medias = [];
-    this.idCount = 1;
-  }
+  constructor(private prisma: PrismaService) {}
 
-  create(createMediaDto: CreateMediaDto) {
+  async create(createMediaDto: CreateMediaDto) {
     const { title, username } = createMediaDto;
-    const existsMedia = this.medias.some((media) => {
-      return media.title === title && media.username === username;
+    const existsMedia = await this.prisma.media.findFirst({
+      where: {
+        username,
+        AND: {
+          title,
+        },
+      },
     });
+
     if (existsMedia) {
       throw new ConflictException();
     }
-    const id = this.idCount;
-    const media = new Media(id, title, username);
-    this.medias.push(media);
-    this.idCount++;
-    return { id };
+
+    return await this.prisma.media.create({
+      data: new Media(title, username),
+    });
   }
 
-  findAll() {
-    return this.medias;
+  async findAll() {
+    return await this.prisma.media.findMany();
   }
 
-  findOne(id: number) {
-    const media = this.medias.find((media) => media._id === id);
+  async findOne(id: number) {
+    const media = await this.prisma.media.findFirst({ where: { id } });
     if (!media) throw new NotFoundException();
+
     return media;
   }
 
-  update(id: number, updateMediaDto: UpdateMediaDto) {
+  async update(id: number, updateMediaDto: UpdateMediaDto) {
     const { title, username } = updateMediaDto;
-    const media = this.medias.find((media) => media._id === id);
+
+    const media = await this.prisma.media.findFirst({ where: { id } });
     if (!media) throw new NotFoundException();
 
-    const existsMedia = this.medias.some((media) => {
-      return (
-        media.title === title && media.username === username && media._id !== id
-      );
+    const existsMedia = await this.prisma.media.findFirst({
+      where: {
+        NOT: { id },
+        AND: {
+          title,
+          username,
+        },
+      },
     });
 
     if (existsMedia) {
       throw new ConflictException();
     }
 
-    const index = media._id - 1;
-    const mediaToUpdate = this.medias[index];
-
-    mediaToUpdate.title = title;
-    mediaToUpdate.username = username;
-
-    return `This action updates a #${id} media`;
+    return await this.prisma.media.update({
+      where: { id },
+      data: new Media(title, username),
+    });
   }
 
-  remove(id: number) {
-    const existsMedia = this.medias.some((media) => media._id === id);
+  async remove(id: number) {
+    const media = await this.prisma.media.findFirst({ where: { id } });
 
-    if (!existsMedia) {
-      throw new NotFoundException();
-    }
+    if (!media) throw new NotFoundException();
 
-    this.medias = this.medias.filter((media) => media._id !== id);
+    const publicationsCount = await this.prisma.publication.count({
+      where: { mediaId: id },
+    });
+    if (publicationsCount > 0)
+      throw new ForbiddenException('This media is linked to a publication');
 
-    return `This action removes a #${id} media`;
-  }
-
-  get _medias() {
-    return this.medias;
+    return await this.prisma.media.delete({
+      where: {
+        id,
+        AND: {
+          NOT: {
+            Publication: { some: {} },
+          },
+        },
+      },
+    });
   }
 }

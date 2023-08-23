@@ -1,75 +1,65 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
-import { Post } from './entities/post.entity';
-import { PublicationService } from 'src/publication/publication.service';
+import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class PostService {
-  private posts: Post[];
-  private idCount: number;
+  constructor(private prisma: PrismaService) {}
 
-  constructor(private readonlypublicationService: PublicationService) {
-    this.posts = [];
-    this.idCount = 1;
+  async create(createPostDto: CreatePostDto) {
+    const { title, text, image } = createPostDto;
+    return await this.prisma.post.create({ data: { title, text, image } });
   }
 
-  create(createPostDto: CreatePostDto) {
-    const { title, text, image } = createPostDto;
+  async findAll() {
+    return await this.prisma.post.findMany();
+  }
 
-    const id = this.idCount;
-    const post = new Post(id, title, text, image);
+  async findOne(id: number) {
+    const post = await this.prisma.post.findUnique({ where: { id } });
 
-    this.posts.push(post);
-    this.idCount++;
+    if (!post) throw new NotFoundException();
 
     return post;
   }
 
-  findAll() {
-    return this.posts;
-  }
-
-  findOne(id: number) {
-    const media = this.posts.find((post) => post._id === id);
-
-    if (!media) throw new NotFoundException();
-
-    return media;
-  }
-
-  update(id: number, updatePostDto: UpdatePostDto) {
+  async update(id: number, updatePostDto: UpdatePostDto) {
     const { title, text, image } = updatePostDto;
 
-    const post = this.posts.find((post) => post._id === id);
+    const post = await this.prisma.post.findUnique({ where: { id } });
     if (!post) throw new NotFoundException();
 
-    const index = post._id - 1;
-    const postToUpdate = this.posts[index];
-
-    postToUpdate._title = title;
-    postToUpdate._text = text;
-
-    if (image !== undefined) {
-      postToUpdate._image = image;
-    }
-
-    return `This action updates a #${id} post`;
+    return await this.prisma.post.update({
+      where: { id },
+      data: { title, text, image: image ?? null },
+    });
   }
 
-  remove(id: number) {
-    const existsPost = this.posts.some((post) => post._id === id);
+  async remove(id: number) {
+    const post = await this.prisma.post.findFirst({ where: { id } });
 
-    if (!existsPost) {
-      throw new NotFoundException();
-    }
+    if (!post) throw new NotFoundException();
 
-    this.posts = this.posts.filter((post) => post._id !== id);
+    const publicationsCount = await this.prisma.publication.count({
+      where: { postId: id },
+    });
+    if (publicationsCount > 0)
+      throw new ForbiddenException('This post is linked to a publication!');
 
-    return `This action removes a #${id} post`;
-  }
-
-  get _posts() {
-    return this.posts;
+    return await this.prisma.post.delete({
+      where: {
+        id,
+        AND: {
+          NOT: {
+            Publication: { some: {} },
+          },
+        },
+      },
+    });
   }
 }

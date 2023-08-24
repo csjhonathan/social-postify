@@ -3,19 +3,23 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
   Delete,
+  Put,
+  HttpCode,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { PublicationService } from './publication.service';
 import { CreatePublicationDto } from './dto/create-publication.dto';
 import { UpdatePublicationDto } from './dto/update-publication.dto';
+import * as httpStatus from 'http-status';
 
 @Controller('publications')
 export class PublicationController {
   constructor(private readonly publicationService: PublicationService) {}
 
   @Post()
+  @HttpCode(httpStatus.CREATED)
   create(@Body() createPublicationDto: CreatePublicationDto) {
     return this.publicationService.create(createPublicationDto);
   }
@@ -26,20 +30,22 @@ export class PublicationController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseIntPipe) id: string) {
     return this.publicationService.findOne(+id);
   }
 
-  @Patch(':id')
+  @Put(':id')
+  @HttpCode(httpStatus.NO_CONTENT)
   update(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: string,
     @Body() updatePublicationDto: UpdatePublicationDto,
   ) {
     return this.publicationService.update(+id, updatePublicationDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  @HttpCode(httpStatus.NO_CONTENT)
+  remove(@Param('id', ParseIntPipe) id: string) {
     return this.publicationService.remove(+id);
   }
 }

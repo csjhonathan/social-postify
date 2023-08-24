@@ -53,7 +53,7 @@ export class PublicationService {
   async findOne(id: number) {
     const publication = await this.publicationRepository.findOne(id);
 
-    if (!publication) throw new NotFoundException();
+    if (!publication) throw new NotFoundException('Publication not found!');
 
     return publication;
   }
@@ -63,7 +63,8 @@ export class PublicationService {
 
     const publication = await this.publicationRepository.findOne(id);
 
-    if (!publication) throw new NotFoundException();
+    if (!publication)
+      throw new NotFoundException('Post not found, no updates were applied!');
 
     const media = await this.mediaRepository.findOne(mediaId);
     const post = await this.postRepository.findOne(postId);
@@ -90,7 +91,8 @@ export class PublicationService {
     const currentDate = new Date(Date.now());
     const isPassed = dayjs(currentDate).isAfter(publication.date);
 
-    if (isPassed) throw new ForbiddenException();
+    if (isPassed)
+      throw new ForbiddenException("Publish date has passed, can't update!");
 
     return await this.publicationRepository.update(id, {
       mediaId,
@@ -103,7 +105,9 @@ export class PublicationService {
     const existsPublication = await this.publicationRepository.findOne(id);
 
     if (!existsPublication) {
-      throw new NotFoundException();
+      throw new NotFoundException(
+        'Publication not found, no deletion applied!',
+      );
     }
 
     return await this.publicationRepository.delete(id);

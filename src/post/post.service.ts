@@ -26,14 +26,15 @@ export class PostService {
   async findOne(id: number) {
     const post = await this.postRepository.findOne(id);
 
-    if (!post) throw new NotFoundException();
+    if (!post) throw new NotFoundException('Post not found!');
 
     return post;
   }
 
   async update(id: number, updatePostDto: UpdatePostDto) {
     const post = await this.postRepository.findOne(id);
-    if (!post) throw new NotFoundException();
+    if (!post)
+      throw new NotFoundException('Post not found, no updates were applied!');
 
     return await this.postRepository.update(id, updatePostDto);
   }
@@ -41,7 +42,7 @@ export class PostService {
   async remove(id: number) {
     const post = await this.postRepository.findOne(id);
 
-    if (!post) throw new NotFoundException();
+    if (!post) throw new NotFoundException('Post not found, no delete applied');
 
     const publicationsCount =
       await this.publicationsRepository.publicationCountByPostId(id);

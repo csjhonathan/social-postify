@@ -24,7 +24,7 @@ export class MediaService {
     );
 
     if (existsMedia) {
-      throw new ConflictException();
+      throw new ConflictException('This media already exists!');
     }
 
     return await this.mediaRepository.create({ title, username });
@@ -36,7 +36,7 @@ export class MediaService {
 
   async findOne(id: number) {
     const media = await this.mediaRepository.findOne(id);
-    if (!media) throw new NotFoundException();
+    if (!media) throw new NotFoundException('Media not found!');
 
     return media;
   }
@@ -45,7 +45,8 @@ export class MediaService {
     const { title, username } = updateMediaDto;
 
     const media = await this.mediaRepository.findOne(id);
-    if (!media) throw new NotFoundException();
+    if (!media)
+      throw new NotFoundException('Media not found, no updates were applied!');
 
     const existsMedia = await this.mediaRepository.getMediaWithUserAndTitle(
       title,
@@ -53,7 +54,7 @@ export class MediaService {
     );
 
     if (existsMedia) {
-      throw new ConflictException();
+      throw new ConflictException('This media already exists!');
     }
 
     return await this.mediaRepository.update(id, { title, username });
@@ -62,7 +63,8 @@ export class MediaService {
   async remove(id: number) {
     const media = await this.mediaRepository.findOne(id);
 
-    if (!media) throw new NotFoundException();
+    if (!media)
+      throw new NotFoundException('Media not found, no deletions were made');
 
     const publicationsCount =
       await this.publicationRepository.publicationCountByMediaId(media.id);

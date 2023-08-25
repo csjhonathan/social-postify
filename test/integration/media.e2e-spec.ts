@@ -12,6 +12,8 @@ describe('MediaController (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let server: request.SuperTest<request.Test>;
+  let testHelper: TestHelper;
+  let mediaFactories: MediaFactories;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -23,11 +25,13 @@ describe('MediaController (e2e)', () => {
     app.useGlobalPipes(new ValidationPipe());
     await app.init();
     server = request(app.getHttpServer());
+
+    testHelper = new TestHelper();
+    mediaFactories = new MediaFactories();
   });
 
   beforeEach(async () => {
-    const { cleanDB } = new TestHelper();
-    await cleanDB(prisma);
+    await testHelper.cleanDB(prisma);
   });
 
   describe('POST /medias', () => {
@@ -70,8 +74,7 @@ describe('MediaController (e2e)', () => {
     });
 
     it('Should respond with an array of size 3 when there are 3 media and status 200', async () => {
-      const { createMedia } = new MediaFactories();
-      await createMedia(prisma, 3);
+      await mediaFactories.createMedia(prisma, 3);
       const { statusCode, body } = await server.get('/medias');
 
       expect(statusCode).toBe(HttpStatus.OK);
@@ -96,9 +99,7 @@ describe('MediaController (e2e)', () => {
       });
 
       it('Should respond with status 200 and media when id is valid', async () => {
-        const { createMedia } = new MediaFactories();
-
-        const media = await createMedia(prisma);
+        const media = await mediaFactories.createMedia(prisma);
 
         const { statusCode, body } = await server.get(`/medias/${media.id}`);
 
@@ -121,9 +122,7 @@ describe('MediaController (e2e)', () => {
     });
 
     it('Should respond with status 400 and not update a media when body is invalid', async () => {
-      const { createMedia } = new MediaFactories();
-
-      const media = await createMedia(prisma);
+      const media = await mediaFactories.createMedia(prisma);
       const { statusCode } = await server.put(`/medias/${media.id}`).send({
         title: '',
         username: '',
@@ -133,7 +132,7 @@ describe('MediaController (e2e)', () => {
     });
 
     it('Should respond with status 204 when id is valid', async () => {
-      const { createMedia, getMediaById } = new MediaFactories();
+      const { createMedia, getMediaById } = mediaFactories;
 
       const { id } = await createMedia(prisma);
       const title = faker.person.firstName();
@@ -165,7 +164,7 @@ describe('MediaController (e2e)', () => {
     });
 
     it('Should respond with status 204', async () => {
-      const { createMedia, getMediaById } = new MediaFactories();
+      const { createMedia, getMediaById } = mediaFactories;
       const { id } = await createMedia(prisma);
 
       const { statusCode } = await server.delete(`/medias/${id}`);

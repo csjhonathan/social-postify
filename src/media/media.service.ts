@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { CreateMediaDto } from './dto/create-media.dto';
 import { UpdateMediaDto } from './dto/update-media.dto';
-import { PublicationRepository } from 'src/publication/publication.repository';
+import { PublicationRepository } from '../publication/publication.repository';
 
 @Injectable()
 export class MediaService {

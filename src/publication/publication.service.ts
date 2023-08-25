@@ -7,8 +7,9 @@ import { CreatePublicationDto } from './dto/create-publication.dto';
 import { UpdatePublicationDto } from './dto/update-publication.dto';
 import dayjs from 'dayjs';
 import { PublicationRepository } from './publication.repository';
-import { MediaRepository } from 'src/media/media.repository';
-import { PostRepository } from 'src/post/post.repository';
+import { MediaRepository } from '../media/media.repository';
+import { PostRepository } from '../post/post.repository';
+import { BuildMessageHelper } from '../helpers/build.message';
 
 @Injectable()
 export class PublicationService {
@@ -16,29 +17,19 @@ export class PublicationService {
     private readonly publicationRepository: PublicationRepository,
     private readonly mediaRepository: MediaRepository,
     private readonly postRepository: PostRepository,
+    private readonly buildMessageHelper: BuildMessageHelper,
   ) {}
 
   async create(createPublicationDto: CreatePublicationDto) {
     const { mediaId, postId, date } = createPublicationDto;
 
-    const media = await this.mediaRepository.findOne(mediaId);
-    const post = await this.postRepository.findOne(postId);
+    const [media, post] = await Promise.all([
+      this.mediaRepository.findOne(mediaId),
+      this.postRepository.findOne(postId),
+    ]);
 
     if (!post || !media) {
-      let message = '';
-
-      if (!post) {
-        message += 'Post ';
-      }
-
-      if (!media) {
-        if (message.length > 0) {
-          message += 'and ';
-        }
-        message += 'Media ';
-      }
-
-      message += 'not exists!';
+      const message = this.buildMessageHelper.errorMessageBuild(post, media);
 
       throw new NotFoundException(message);
     }
@@ -66,24 +57,13 @@ export class PublicationService {
     if (!publication)
       throw new NotFoundException('Post not found, no updates were applied!');
 
-    const media = await this.mediaRepository.findOne(mediaId);
-    const post = await this.postRepository.findOne(postId);
+    const [media, post] = await Promise.all([
+      this.mediaRepository.findOne(mediaId),
+      this.postRepository.findOne(postId),
+    ]);
 
     if (!post || !media) {
-      let message = '';
-
-      if (!post) {
-        message += 'Post ';
-      }
-
-      if (!media) {
-        if (message.length > 0) {
-          message += 'and ';
-        }
-        message += 'Media ';
-      }
-
-      message += 'not exists!';
+      const message = this.buildMessageHelper.errorMessageBuild(post, media);
 
       throw new NotFoundException(message);
     }

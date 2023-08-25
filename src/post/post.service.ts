@@ -6,7 +6,7 @@ import {
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PostRepository } from './post.repository';
-import { PublicationRepository } from 'src/publication/publication.repository';
+import { PublicationRepository } from '../publication/publication.repository';
 
 @Injectable()
 export class PostService {

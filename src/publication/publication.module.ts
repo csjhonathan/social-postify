@@ -1,12 +1,13 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { PublicationService } from './publication.service';
 import { PublicationController } from './publication.controller';
-import { PrismaModule } from 'src/prisma/prisma.module';
-import { PostModule } from 'src/post/post.module';
-import { MediaModule } from 'src/media/media.module';
+import { PrismaModule } from '../prisma/prisma.module';
+import { PostModule } from '../post/post.module';
+import { MediaModule } from '../media/media.module';
 import { PublicationRepository } from './publication.repository';
-import { PostRepository } from 'src/post/post.repository';
-import { MediaRepository } from 'src/media/media.repository';
+import { PostRepository } from '../post/post.repository';
+import { MediaRepository } from '../media/media.repository';
+import { BuildMessageHelper } from '../helpers/build.message';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { MediaRepository } from 'src/media/media.repository';
     PublicationService,
     PostRepository,
     MediaRepository,
+    BuildMessageHelper,
   ],
   exports: [PublicationService],
 })

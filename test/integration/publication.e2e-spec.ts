@@ -9,6 +9,7 @@ import { MediaFactories } from '../factories/media.factories';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { PublicationFactories } from '../factories/publication.factories';
 import { Publication } from '@prisma/client';
+import * as dayjs from 'dayjs';
 
 describe('PublicationController (e2e)', () => {
   let app: INestApplication;
@@ -142,8 +143,8 @@ describe('PublicationController (e2e)', () => {
       );
     });
 
-    it('should respond an array with 7 publications and status 200 for after filter', async () => {
-      const currentDate = new Date();
+    it('should respond an array with 10 publications and status 200 for after filter', async () => {
+      let pastDate = faker.date.past();
       for (let i = 0; i < 10; i++) {
         const [{ id: postId }, { id: mediaId }] = await Promise.all([
           postFactories.createPost(prisma),
@@ -153,16 +154,23 @@ describe('PublicationController (e2e)', () => {
           prisma,
           mediaId,
           postId,
-          i + 3 >= 10 ? 'PAST' : 'FUTURE',
+          'PAST',
+          pastDate,
         );
+
+        const nextDate = faker.date.past();
+
+        if (dayjs(nextDate).isBefore(pastDate)) {
+          pastDate = nextDate;
+        }
       }
 
       const { statusCode, body } = await server.get(
-        `/publications?after=${currentDate}`,
+        `/publications?after=${pastDate}`,
       );
 
       expect(statusCode).toBe(HttpStatus.OK);
-      expect(body).toHaveLength(7);
+      expect(body).toHaveLength(10);
       expect(body).toEqual(
         expect.arrayContaining([
           expect.objectContaining<Publication>({
@@ -298,8 +306,6 @@ describe('PublicationController (e2e)', () => {
         mediaFactories.createMedia(prisma),
       ]);
 
-      const media1 = await mediaFactories.getMediaById(prisma, mediaId2);
-      console.log(media1);
       const { id } = await publcationFactories.createPublication(
         prisma,
         mediaId,

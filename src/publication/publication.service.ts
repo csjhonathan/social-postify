@@ -63,7 +63,6 @@ export class PublicationService {
     ]);
 
     if (!post || !media) {
-      console.log({ media, post, updatePublicationDto });
       const message = this.buildMessageHelper.errorMessageBuild(post, media);
 
       throw new NotFoundException(message);

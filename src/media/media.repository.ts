@@ -28,7 +28,7 @@ export class MediaRepository {
   }
 
   async findOne(id: number) {
-    return await this.prisma.media.findFirst({ where: { id } });
+    return await this.prisma.media.findUnique({ where: { id } });
   }
 
   async update(id: number, updateMediaDto: UpdateMediaDto) {

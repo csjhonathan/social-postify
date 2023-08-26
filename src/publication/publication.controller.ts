@@ -8,6 +8,7 @@ import {
   Put,
   HttpCode,
   ParseIntPipe,
+  Query,
 } from '@nestjs/common';
 import { PublicationService } from './publication.service';
 import { CreatePublicationDto } from './dto/create-publication.dto';
@@ -25,8 +26,11 @@ export class PublicationController {
   }
 
   @Get()
-  findAll() {
-    return this.publicationService.findAll();
+  findAll(
+    @Query('published') published: boolean | null,
+    @Query('after') after: string | null,
+  ) {
+    return this.publicationService.findAll(published, after);
   }
 
   @Get(':id')

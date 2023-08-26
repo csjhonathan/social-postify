@@ -2,36 +2,35 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from './../../src/app.module';
-import { PrismaService } from '../../src/prisma/prisma.service';
 import { TestHelper } from '../helpers/testHelpers';
 import { MediaFactories } from '../factories/media.factories';
 import { faker } from '@faker-js/faker';
 import { Media } from '@prisma/client';
+import { PrismaService } from '../../src/prisma/prisma.service';
 
 describe('MediaController (e2e)', () => {
   let app: INestApplication;
-  let prisma: PrismaService;
+  let prisma: PrismaService = new PrismaService();
   let server: request.SuperTest<request.Test>;
-  let testHelper: TestHelper;
   let mediaFactories: MediaFactories;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(PrismaService)
+      .useValue(prisma)
+      .compile();
 
     app = moduleFixture.createNestApplication();
-    prisma = moduleFixture.get(PrismaService);
+    prisma = moduleFixture.get<PrismaService>(PrismaService);
     app.useGlobalPipes(new ValidationPipe());
     await app.init();
     server = request(app.getHttpServer());
 
-    testHelper = new TestHelper();
     mediaFactories = new MediaFactories();
-  });
-
-  beforeEach(async () => {
-    await testHelper.cleanDB(prisma);
+    const { cleanDB } = new TestHelper();
+    await cleanDB(prisma);
   });
 
   describe('POST /medias', () => {
@@ -74,7 +73,7 @@ describe('MediaController (e2e)', () => {
     });
 
     it('Should respond with an array of size 3 when there are 3 media and status 200', async () => {
-      await mediaFactories.createMedia(prisma, 3);
+      for (let i = 0; i < 3; i++) await mediaFactories.createMedia(prisma);
       const { statusCode, body } = await server.get('/medias');
 
       expect(statusCode).toBe(HttpStatus.OK);

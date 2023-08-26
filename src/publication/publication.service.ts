@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { CreatePublicationDto } from './dto/create-publication.dto';
 import { UpdatePublicationDto } from './dto/update-publication.dto';
-import dayjs from 'dayjs';
+import * as dayjs from 'dayjs';
 import { PublicationRepository } from './publication.repository';
 import { MediaRepository } from '../media/media.repository';
 import { PostRepository } from '../post/post.repository';
@@ -37,8 +37,8 @@ export class PublicationService {
     return await this.publicationRepository.create({ mediaId, postId, date });
   }
 
-  async findAll() {
-    return await this.publicationRepository.findAll();
+  async findAll(published: boolean | null, after: string | null) {
+    return await this.publicationRepository.findAll(published, after);
   }
 
   async findOne(id: number) {
@@ -63,6 +63,7 @@ export class PublicationService {
     ]);
 
     if (!post || !media) {
+      console.log({ media, post, updatePublicationDto });
       const message = this.buildMessageHelper.errorMessageBuild(post, media);
 
       throw new NotFoundException(message);

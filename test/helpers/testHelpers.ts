@@ -6,13 +6,4 @@ export class TestHelper {
     await prisma.media.deleteMany({});
     await prisma.post.deleteMany({});
   }
-
-  suppressConsoleWarnings(callback: () => void) {
-    const originalWarn = console.warn;
-    console.warn = jest.fn();
-
-    callback();
-
-    console.warn = originalWarn;
-  }
 }

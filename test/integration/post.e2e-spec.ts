@@ -2,36 +2,35 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from './../../src/app.module';
-import { PrismaService } from '../../src/prisma/prisma.service';
 import { TestHelper } from '../helpers/testHelpers';
 import { faker } from '@faker-js/faker';
 import { PostFactories } from '../factories/post.factories';
 import { Post } from '@prisma/client';
+import { PrismaService } from '../../src/prisma/prisma.service';
 
 describe('PostController (e2e)', () => {
   let app: INestApplication;
-  let prisma: PrismaService;
+  let prisma: PrismaService = new PrismaService();
   let server: request.SuperTest<request.Test>;
-  let testHelper: TestHelper;
   let postFactories: PostFactories;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(PrismaService)
+      .useValue(prisma)
+      .compile();
 
     app = moduleFixture.createNestApplication();
-    prisma = moduleFixture.get(PrismaService);
+    prisma = moduleFixture.get<PrismaService>(PrismaService);
     app.useGlobalPipes(new ValidationPipe());
     await app.init();
     server = request(app.getHttpServer());
 
-    testHelper = new TestHelper();
     postFactories = new PostFactories();
-  });
-
-  beforeEach(async () => {
-    await testHelper.cleanDB(prisma);
+    const { cleanDB } = new TestHelper();
+    await cleanDB(prisma);
   });
 
   describe('POST /posts', () => {
@@ -101,7 +100,10 @@ describe('PostController (e2e)', () => {
     });
 
     it('Should respond with an array of size 2 when there are 2 post and status 200 with image', async () => {
-      await postFactories.createPost(prisma, 2, true);
+      for (let i = 0; i < 2; i++) {
+        const image = i + 1 <= 2;
+        await postFactories.createPost(prisma, image);
+      }
       const { statusCode, body } = await server.get('/posts');
 
       expect(statusCode).toBe(HttpStatus.OK);

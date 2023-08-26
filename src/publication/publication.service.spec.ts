@@ -9,12 +9,18 @@ import { PublicationService } from './publication.service';
 import { CreatePublicationDto } from './dto/create-publication.dto';
 import { BuildMessageHelper } from '../helpers/build.message';
 import { UpdatePublicationDto } from './dto/update-publication.dto';
+import { PublicationFactories } from '../../test/factories/publication.factories';
+import { MediaFactories } from '../../test/factories/media.factories';
+import { PostFactories } from '../../test/factories/post.factories';
 
 describe('PublicationService', () => {
   let publicationService: PublicationService;
   let publicationRepository: PublicationRepository;
   let postRepository: PostRepository;
   let mediaRepository: MediaRepository;
+  const publicationFactories = new PublicationFactories();
+  const mediaFactories = new MediaFactories();
+  const postFactories = new PostFactories();
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -44,18 +50,10 @@ describe('PublicationService', () => {
       mediaMock.mockResolvedValueOnce(null);
 
       const postMock = jest.spyOn(postRepository, 'findOne');
-      postMock.mockResolvedValueOnce({
-        id: faker.number.int({ max: 10 }),
-        title: faker.person.firstName(),
-        text: faker.lorem.lines(2),
-        image: faker.internet.url(),
-      });
+      postMock.mockResolvedValueOnce(postFactories.getMockedPost());
 
-      const data: CreatePublicationDto = {
-        date: faker.date.past().toDateString(),
-        mediaId: faker.number.int(),
-        postId: faker.number.int(),
-      };
+      const data: CreatePublicationDto =
+        publicationFactories.buildPublicationToCreateOrUpdate();
 
       const promise = publicationService.create(data);
 
@@ -66,20 +64,13 @@ describe('PublicationService', () => {
 
     it('Should respond with NotFoundError with message when post not exists', () => {
       const mediaMock = jest.spyOn(mediaRepository, 'findOne');
-      mediaMock.mockResolvedValueOnce({
-        id: faker.number.int(),
-        title: faker.person.firstName(),
-        username: faker.internet.url(),
-      });
+      mediaMock.mockResolvedValueOnce(mediaFactories.getMockedMedia());
 
       const postMock = jest.spyOn(postRepository, 'findOne');
       postMock.mockResolvedValueOnce(null);
 
-      const data: CreatePublicationDto = {
-        date: faker.date.past().toDateString(),
-        mediaId: faker.number.int(),
-        postId: faker.number.int(),
-      };
+      const data: CreatePublicationDto =
+        publicationFactories.buildPublicationToCreateOrUpdate();
 
       const promise = publicationService.create(data);
 
@@ -95,11 +86,8 @@ describe('PublicationService', () => {
       const postMock = jest.spyOn(postRepository, 'findOne');
       postMock.mockResolvedValueOnce(null);
 
-      const data: CreatePublicationDto = {
-        date: faker.date.past().toDateString(),
-        mediaId: faker.number.int(),
-        postId: faker.number.int(),
-      };
+      const data =
+        publicationFactories.buildPublicationToCreateOrUpdate<CreatePublicationDto>();
 
       const promise = publicationService.create(data);
 
@@ -131,11 +119,9 @@ describe('PublicationService', () => {
 
       const id = faker.number.int({ max: 10 });
 
-      const data: UpdatePublicationDto = {
-        date: faker.date.past().toDateString(),
-        mediaId: faker.number.int(),
-        postId: faker.number.int(),
-      };
+      const data: UpdatePublicationDto =
+        publicationFactories.buildPublicationToCreateOrUpdate();
+
       const promise = publicationService.update(id, data);
 
       expect(promise).rejects.toThrow(
@@ -150,28 +136,17 @@ describe('PublicationService', () => {
       mediaMock.mockResolvedValueOnce(null);
 
       const postMock = jest.spyOn(postRepository, 'findOne');
-      postMock.mockResolvedValueOnce({
-        id: faker.number.int({ max: 10 }),
-        title: faker.person.firstName(),
-        text: faker.lorem.lines(2),
-        image: faker.internet.url(),
-      });
+      postMock.mockResolvedValueOnce(postFactories.getMockedPost());
 
       const publicationMock = jest.spyOn(publicationRepository, 'findOne');
-      publicationMock.mockResolvedValueOnce({
-        id: faker.number.int({ max: 10 }),
-        mediaId: faker.number.int({ max: 10 }),
-        postId: faker.number.int({ max: 10 }),
-        date: faker.date.past(),
-      });
+      publicationMock.mockResolvedValueOnce(
+        publicationFactories.buildPublication('past'),
+      );
 
       const id = faker.number.int({ max: 10 });
 
-      const data: UpdatePublicationDto = {
-        date: faker.date.past().toDateString(),
-        mediaId: faker.number.int(),
-        postId: faker.number.int(),
-      };
+      const data: UpdatePublicationDto =
+        publicationFactories.buildPublicationToCreateOrUpdate();
 
       const promise = publicationService.update(id, data);
 
@@ -182,30 +157,20 @@ describe('PublicationService', () => {
 
     it('Should respond with NotFoundError with message when post not exists', () => {
       const mediaMock = jest.spyOn(mediaRepository, 'findOne');
-      mediaMock.mockResolvedValueOnce({
-        id: faker.number.int(),
-        title: faker.person.firstName(),
-        username: faker.internet.url(),
-      });
+      mediaMock.mockResolvedValueOnce(mediaFactories.getMockedMedia());
 
       const postMock = jest.spyOn(postRepository, 'findOne');
       postMock.mockResolvedValueOnce(null);
 
       const publicationMock = jest.spyOn(publicationRepository, 'findOne');
-      publicationMock.mockResolvedValueOnce({
-        id: faker.number.int({ max: 10 }),
-        mediaId: faker.number.int({ max: 10 }),
-        postId: faker.number.int({ max: 10 }),
-        date: faker.date.past(),
-      });
+      publicationMock.mockResolvedValueOnce(
+        publicationFactories.buildPublication('past'),
+      );
 
       const id = faker.number.int({ max: 10 });
 
-      const data: UpdatePublicationDto = {
-        date: faker.date.past().toDateString(),
-        mediaId: faker.number.int(),
-        postId: faker.number.int(),
-      };
+      const data: UpdatePublicationDto =
+        publicationFactories.buildPublicationToCreateOrUpdate();
 
       const promise = publicationService.update(id, data);
 
@@ -222,20 +187,14 @@ describe('PublicationService', () => {
       postMock.mockResolvedValueOnce(null);
 
       const publicationMock = jest.spyOn(publicationRepository, 'findOne');
-      publicationMock.mockResolvedValueOnce({
-        id: faker.number.int({ max: 10 }),
-        mediaId: faker.number.int({ max: 10 }),
-        postId: faker.number.int({ max: 10 }),
-        date: faker.date.past(),
-      });
+      publicationMock.mockResolvedValueOnce(
+        publicationFactories.buildPublication('past'),
+      );
 
       const id = faker.number.int({ max: 10 });
 
-      const data: UpdatePublicationDto = {
-        date: faker.date.past().toDateString(),
-        mediaId: faker.number.int(),
-        postId: faker.number.int(),
-      };
+      const data: UpdatePublicationDto =
+        publicationFactories.buildPublicationToCreateOrUpdate();
 
       const promise = publicationService.update(id, data);
 
@@ -246,35 +205,20 @@ describe('PublicationService', () => {
 
     it('Should respond with a ForbiddenError when the post has already been published', () => {
       const mediaMock = jest.spyOn(mediaRepository, 'findOne');
-      mediaMock.mockResolvedValueOnce({
-        id: faker.number.int(),
-        title: faker.person.firstName(),
-        username: faker.internet.url(),
-      });
+      mediaMock.mockResolvedValueOnce(mediaFactories.getMockedMedia());
 
       const postMock = jest.spyOn(postRepository, 'findOne');
-      postMock.mockResolvedValueOnce({
-        id: faker.number.int({ max: 10 }),
-        title: faker.person.firstName(),
-        text: faker.lorem.lines(2),
-        image: faker.internet.url(),
-      });
+      postMock.mockResolvedValueOnce(postFactories.getMockedPost());
 
       const publicationMock = jest.spyOn(publicationRepository, 'findOne');
-      publicationMock.mockResolvedValueOnce({
-        id: faker.number.int({ max: 10 }),
-        mediaId: faker.number.int({ max: 10 }),
-        postId: faker.number.int({ max: 10 }),
-        date: faker.date.past(),
-      });
+      publicationMock.mockResolvedValueOnce(
+        publicationFactories.buildPublication('past'),
+      );
 
       const id = faker.number.int({ max: 10 });
 
-      const data: UpdatePublicationDto = {
-        date: faker.date.past().toDateString(),
-        mediaId: faker.number.int(),
-        postId: faker.number.int(),
-      };
+      const data: UpdatePublicationDto =
+        publicationFactories.buildPublicationToCreateOrUpdate();
 
       const promise = publicationService.update(id, data);
 

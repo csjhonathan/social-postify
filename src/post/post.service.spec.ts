@@ -6,11 +6,14 @@ import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PostService } from './post.service';
 import { PostRepository } from './post.repository';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { PostFactories } from '../../test/factories/post.factories';
 
 describe('PostService', () => {
   let postService: PostService;
   let postRepository: PostRepository;
   let publicationRepository: PublicationRepository;
+  const postFactories = new PostFactories();
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -44,10 +47,8 @@ describe('PostService', () => {
       const postMock = jest.spyOn(postRepository, 'findOne');
       postMock.mockResolvedValueOnce(null);
 
-      const data: UpdatePostDto = {
-        title: faker.person.firstName(),
-        text: faker.person.firstName(),
-      };
+      const data = postFactories.createOrUpdatePostMock<UpdatePostDto>();
+
       const promise = postService.update(faker.number.int(), data);
 
       expect(promise).rejects.toThrow(
@@ -69,15 +70,10 @@ describe('PostService', () => {
     });
   });
 
-  describe('DELETE /medias/:id', () => {
+  describe('DELETE /posts/:id', () => {
     it('Should respond with ForbiddenException when post is linked with a publication', async () => {
-      const existMediaMock = jest.spyOn(postRepository, 'findOne');
-      existMediaMock.mockResolvedValueOnce({
-        id: faker.number.int(),
-        title: faker.person.firstName(),
-        text: faker.person.firstName(),
-        image: faker.internet.url(),
-      });
+      const existPostMock = jest.spyOn(postRepository, 'findOne');
+      existPostMock.mockResolvedValueOnce(postFactories.getMockedPost());
 
       const publcationMock = jest.spyOn(
         publicationRepository,

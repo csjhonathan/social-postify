@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { PrismaService } from '../../src/prisma/prisma.service';
+import { Post } from '@prisma/client';
 
 export class PostFactories {
   async createPost(prisma: PrismaService, image = false) {
@@ -14,5 +15,28 @@ export class PostFactories {
 
   async getPostById(prisma: PrismaService, id: number) {
     return await prisma.post.findUnique({ where: { id } });
+  }
+
+  getMockedPost(): Post {
+    return {
+      id: faker.number.int(),
+      title: faker.person.firstName(),
+      text: faker.lorem.lines(2),
+      image: faker.internet.url(),
+    };
+  }
+
+  createOrUpdatePostMock<
+    T extends {
+      title?: string;
+      text?: string;
+      image?: string;
+    },
+  >(): T {
+    return {
+      title: faker.person.firstName(),
+      image: faker.internet.url(),
+      text: faker.lorem.lines(2),
+    } as T;
   }
 }

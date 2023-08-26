@@ -55,7 +55,9 @@ export class PublicationService {
     const publication = await this.publicationRepository.findOne(id);
 
     if (!publication)
-      throw new NotFoundException('Post not found, no updates were applied!');
+      throw new NotFoundException(
+        'Publication not found, no updates were applied!',
+      );
 
     const [media, post] = await Promise.all([
       this.mediaRepository.findOne(mediaId),

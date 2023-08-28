@@ -8,6 +8,7 @@ import {
   Put,
   HttpCode,
   ParseIntPipe,
+  BadRequestException,
 } from '@nestjs/common';
 import { PostService } from './post.service';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -40,6 +41,8 @@ export class PostController {
     @Param('id', ParseIntPipe) id: string,
     @Body() updatePostDto: UpdatePostDto,
   ) {
+    if (!Object.keys(updatePostDto).length)
+      throw new BadRequestException('The request body cannot be empty!');
     return this.postService.update(+id, updatePostDto);
   }
 

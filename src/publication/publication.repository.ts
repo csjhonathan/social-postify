@@ -13,18 +13,19 @@ export class PublicationRepository {
     });
   }
 
-  async findAll(published: boolean | null, after: string | null) {
+  async findAll(published: string | null, after: string | null) {
     const currentDate = new Date();
 
     return await this.prisma.publication.findMany({
       where: {
         date: {
-          lt: published ? currentDate : undefined,
-        },
-        AND: {
-          date: {
-            gte: after ? new Date(after) : undefined,
-          },
+          lt: published === 'true' ? currentDate : undefined,
+          gte:
+            published === 'false'
+              ? currentDate
+              : after
+              ? new Date(after)
+              : undefined,
         },
       },
     });

@@ -37,7 +37,7 @@ export class PublicationService {
     return await this.publicationRepository.create({ mediaId, postId, date });
   }
 
-  async findAll(published: boolean | null, after: string | null) {
+  async findAll(published: string | null, after: string | null) {
     return await this.publicationRepository.findAll(published, after);
   }
 

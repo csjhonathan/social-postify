@@ -130,6 +130,13 @@ describe('MediaController (e2e)', () => {
       expect(statusCode).toBe(HttpStatus.BAD_REQUEST);
     });
 
+    it('Should respond with status 400 and not update a media when body is empty', async () => {
+      const media = await mediaFactories.createMedia(prisma);
+      const { statusCode } = await server.put(`/medias/${media.id}`).send({});
+
+      expect(statusCode).toBe(HttpStatus.BAD_REQUEST);
+    });
+
     it('Should respond with status 204 when id is valid', async () => {
       const { createMedia, getMediaById } = mediaFactories;
 

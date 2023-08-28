@@ -80,8 +80,8 @@ describe('PublicationController (e2e)', () => {
       expect(body).toEqual([]);
     });
 
-    it('should respond an array with 3 publications and status 200', async () => {
-      for (let i = 0; i < 3; i++) {
+    it('should respond an array with 10 publications and status 200', async () => {
+      for (let i = 0; i < 10; i++) {
         const [{ id: postId }, { id: mediaId }] = await Promise.all([
           postFactories.createPost(prisma),
           mediaFactories.createMedia(prisma),
@@ -91,14 +91,14 @@ describe('PublicationController (e2e)', () => {
           prisma,
           mediaId,
           postId,
-          'PAST',
+          i + 4 >= 10 ? 'PAST' : 'FUTURE',
         );
       }
 
       const { statusCode, body } = await server.get('/publications');
 
       expect(statusCode).toBe(HttpStatus.OK);
-      expect(body).toHaveLength(3);
+      expect(body).toHaveLength(10);
       expect(body).toEqual(
         expect.arrayContaining([
           expect.objectContaining<Publication>({
@@ -111,7 +111,7 @@ describe('PublicationController (e2e)', () => {
       );
     });
 
-    it('should respond an array with 3 publications and status 200 for published filter', async () => {
+    it('should respond an array with 3 publications and status 200 for published filter true', async () => {
       for (let i = 0; i < 10; i++) {
         const [{ id: postId }, { id: mediaId }] = await Promise.all([
           postFactories.createPost(prisma),
@@ -127,6 +127,38 @@ describe('PublicationController (e2e)', () => {
 
       const { statusCode, body } = await server.get(
         `/publications?published=true`,
+      );
+
+      expect(statusCode).toBe(HttpStatus.OK);
+      expect(body).toHaveLength(3);
+      expect(body).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining<Publication>({
+            id: expect.any(Number),
+            mediaId: expect.any(Number),
+            postId: expect.any(Number),
+            date: expect.any(String),
+          }),
+        ]),
+      );
+    });
+
+    it('should respond an array with 3 publications and status 200 for published filter false', async () => {
+      for (let i = 0; i < 10; i++) {
+        const [{ id: postId }, { id: mediaId }] = await Promise.all([
+          postFactories.createPost(prisma),
+          mediaFactories.createMedia(prisma),
+        ]);
+        await publcationFactories.createPublication(
+          prisma,
+          mediaId,
+          postId,
+          i + 3 >= 10 ? 'FUTURE' : 'PAST',
+        );
+      }
+
+      const { statusCode, body } = await server.get(
+        `/publications?published=false`,
       );
 
       expect(statusCode).toBe(HttpStatus.OK);
@@ -289,6 +321,24 @@ describe('PublicationController (e2e)', () => {
         postId: '',
         date: '',
       });
+
+      expect(statusCode).toBe(HttpStatus.BAD_REQUEST);
+    });
+
+    it('should respond with status 400 when body is empty', async () => {
+      const [{ id: postId }, { id: mediaId }] = await Promise.all([
+        postFactories.createPost(prisma),
+        mediaFactories.createMedia(prisma),
+      ]);
+
+      const { id } = await publcationFactories.createPublication(
+        prisma,
+        mediaId,
+        postId,
+        'FUTURE',
+      );
+
+      const { statusCode } = await server.put(`/publications/${id}`).send({});
 
       expect(statusCode).toBe(HttpStatus.BAD_REQUEST);
     });

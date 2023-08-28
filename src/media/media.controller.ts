@@ -8,6 +8,7 @@ import {
   HttpCode,
   ParseIntPipe,
   Put,
+  BadRequestException,
 } from '@nestjs/common';
 import { MediaService } from './media.service';
 import { CreateMediaDto } from './dto/create-media.dto';
@@ -40,6 +41,8 @@ export class MediaController {
     @Param('id', ParseIntPipe) id: string,
     @Body() updateMediaDto: UpdateMediaDto,
   ) {
+    if (!Object.keys(updateMediaDto).length)
+      throw new BadRequestException('The request body cannot be empty!');
     return this.mediaService.update(+id, updateMediaDto);
   }
 

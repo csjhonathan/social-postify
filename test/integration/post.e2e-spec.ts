@@ -164,6 +164,13 @@ describe('PostController (e2e)', () => {
       expect(statusCode).toBe(HttpStatus.BAD_REQUEST);
     });
 
+    it('Should respond with status 400 and not update a post when body is empty', async () => {
+      const post = await postFactories.createPost(prisma);
+      const { statusCode } = await server.put(`/posts/${post.id}`).send({});
+
+      expect(statusCode).toBe(HttpStatus.BAD_REQUEST);
+    });
+
     it('Should respond with status 204 when id is valid', async () => {
       const { createPost, getPostById } = postFactories;
 

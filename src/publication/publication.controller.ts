@@ -9,6 +9,7 @@ import {
   HttpCode,
   ParseIntPipe,
   Query,
+  BadRequestException,
 } from '@nestjs/common';
 import { PublicationService } from './publication.service';
 import { CreatePublicationDto } from './dto/create-publication.dto';
@@ -27,7 +28,7 @@ export class PublicationController {
 
   @Get()
   findAll(
-    @Query('published') published: boolean | null,
+    @Query('published') published: string | null,
     @Query('after') after: string | null,
   ) {
     return this.publicationService.findAll(published, after);
@@ -44,6 +45,8 @@ export class PublicationController {
     @Param('id', ParseIntPipe) id: string,
     @Body() updatePublicationDto: UpdatePublicationDto,
   ) {
+    if (!Object.keys(updatePublicationDto).length)
+      throw new BadRequestException('The request body cannot be empty!');
     return this.publicationService.update(+id, updatePublicationDto);
   }
 
